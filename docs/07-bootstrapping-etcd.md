@@ -38,7 +38,6 @@ ETCD_NAME=$(hostname -s)
 Create a new `/etc/etcd/conf.yml`:
 
 ```
-sudo rm /etc/etcd/conf.yml
 cat <<EOF | sudo tee /etc/etcd/conf.yml
 # This is the configuration file for the etcd server.
 
@@ -191,6 +190,18 @@ EOF
 ```
   sudo rc-service etcd start
   sudo rc-update add etcd boot
+```
+
+You can verify to ensure that etcd has started correct with:
+
+```
+sudo rc-service etcd status
+```
+
+it should output
+
+```
+ * status: started
 ```
 
 > Remember to run the above commands on each controller node: `kcontroller1`, `kcontroller2`, and `kcontroller3`.
