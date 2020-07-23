@@ -22,17 +22,6 @@ The document will not cover how to do so for a VM. Please seek documentation of 
 
 The virtual machines in this lab will be provisioned using [Alpine (virt variant)](https://alpinelinux.org/downloads/) 3.12, which has good support for the [containerd container runtime](https://github.com/containerd/containerd). Each compute instance will be provisioned with a fixed private IP address to simplify the Kubernetes bootstrapping process.
 
-At the time of the writing, Alpine edge has all the up-to-date kubernetes packages. Please enable Alpine edge repositories:
-
-```sh
-echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" | sudo tee /etc/apk/repositories
-echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" | sudo tee -a /etc/apk/repositories
-echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" | sudo tee -a /etc/apk/repositories
-
-sudo apk update
-sudo apk upgrade
-```
-
 ### Kubernetes Controllers
 
 Create three VMs which will host the Kubernetes control plane.
