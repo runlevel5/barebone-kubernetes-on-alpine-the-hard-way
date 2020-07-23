@@ -58,7 +58,7 @@ and update the hosts file:
 ```
 echo "172.42.42.101   kcontroller1" | sudo tee -a /etc/hosts
 echo "172.42.42.102   kcontroller2" | sudo tee -a /etc/hosts
-echo "172.42.42.103   kcontroller2" | sudo tee -a /etc/hosts
+echo "172.42.42.103   kcontroller3" | sudo tee -a /etc/hosts
 echo "172.42.42.201   kworker1" | sudo tee -a /etc/hosts
 echo "172.42.42.202   kworker2" | sudo tee -a /etc/hosts
 echo "172.42.42.203   kworker3" | sudo tee -a /etc/hosts
