@@ -4,51 +4,30 @@ Kubernetes components are stateless and store cluster state in [etcd](https://gi
 
 ## Prerequisites
 
-The commands in this lab must be run on each controller instance: `controller-0`, `controller-1`, and `controller-2`. Login to each controller instance using the `gcloud` command. Example:
-
-```
-gcloud compute ssh controller-0
-```
-
-### Running commands in parallel with tmux
-
-[tmux](https://github.com/tmux/tmux/wiki) can be used to run commands on multiple compute instances at the same time. See the [Running commands in parallel with tmux](01-prerequisites.md#running-commands-in-parallel-with-tmux) section in the Prerequisites lab.
+The commands in this lab must be run on each controller VM: `kcontroller1`, `kcontroller2`, and `kcontroller3`.
 
 ## Bootstrapping an etcd Cluster Member
 
 ### Download and Install the etcd Binaries
 
-Download the official etcd release binaries from the [etcd](https://github.com/etcd-io/etcd) GitHub project:
+Install etcd and ectdctl:
 
 ```
-wget -q --show-progress --https-only --timestamping \
-  "https://github.com/etcd-io/etcd/releases/download/v3.4.10/etcd-v3.4.10-linux-amd64.tar.gz"
-```
-
-Extract and install the `etcd` server and the `etcdctl` command line utility:
-
-```
-{
-  tar -xvf etcd-v3.4.10-linux-amd64.tar.gz
-  sudo mv etcd-v3.4.10-linux-amd64/etcd* /usr/local/bin/
-}
+sudo apk add etcd
 ```
 
 ### Configure the etcd Server
 
 ```
-{
   sudo mkdir -p /etc/etcd /var/lib/etcd
   sudo chmod 700 /var/lib/etcd
   sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
-}
 ```
 
 The instance internal IP address will be used to serve client requests and communicate with etcd cluster peers. Retrieve the internal IP address for the current compute instance:
 
 ```
-INTERNAL_IP=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)
+INTERNAL_IP=$(hostname -i)
 ```
 
 Each etcd member must have a unique name within an etcd cluster. Set the etcd name to match the hostname of the current compute instance:
@@ -57,53 +36,165 @@ Each etcd member must have a unique name within an etcd cluster. Set the etcd na
 ETCD_NAME=$(hostname -s)
 ```
 
-Create the `etcd.service` systemd unit file:
+Create a new `/etc/etcd/conf.yml`:
 
 ```
-cat <<EOF | sudo tee /etc/systemd/system/etcd.service
-[Unit]
-Description=etcd
-Documentation=https://github.com/coreos
+sudo rm /etc/etcd/conf.yml
+cat <<EOF | sudo tee /etc/etcd/conf.yml
+# This is the configuration file for the etcd server.
 
-[Service]
-Type=notify
-ExecStart=/usr/local/bin/etcd \\
-  --name ${ETCD_NAME} \\
-  --cert-file=/etc/etcd/kubernetes.pem \\
-  --key-file=/etc/etcd/kubernetes-key.pem \\
-  --peer-cert-file=/etc/etcd/kubernetes.pem \\
-  --peer-key-file=/etc/etcd/kubernetes-key.pem \\
-  --trusted-ca-file=/etc/etcd/ca.pem \\
-  --peer-trusted-ca-file=/etc/etcd/ca.pem \\
-  --peer-client-cert-auth \\
-  --client-cert-auth \\
-  --initial-advertise-peer-urls https://${INTERNAL_IP}:2380 \\
-  --listen-peer-urls https://${INTERNAL_IP}:2380 \\
-  --listen-client-urls https://${INTERNAL_IP}:2379,https://127.0.0.1:2379 \\
-  --advertise-client-urls https://${INTERNAL_IP}:2379 \\
-  --initial-cluster-token etcd-cluster-0 \\
-  --initial-cluster controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380 \\
-  --initial-cluster-state new \\
-  --data-dir=/var/lib/etcd
-Restart=on-failure
-RestartSec=5
+# Human-readable name for this member.
+name: ${ETCD_NAME}
 
-[Install]
-WantedBy=multi-user.target
+# Path to the data directory.
+data-dir: /var/lib/etcd
+
+# Path to the dedicated wal directory.
+wal-dir:
+
+# Number of committed transactions to trigger a snapshot to disk.
+snapshot-count: 10000
+
+# Time (in milliseconds) of a heartbeat interval.
+heartbeat-interval: 100
+
+# Time (in milliseconds) for an election to timeout.
+election-timeout: 1000
+
+# Raise alarms when backend size exceeds the given quota. 0 means use the
+# default quota.
+quota-backend-bytes: 0
+
+# List of comma separated URLs to listen on for peer traffic.
+listen-peer-urls: https://${INTERNAL_IP}:2380
+
+# List of comma separated URLs to listen on for client traffic.
+listen-client-urls: https://${INTERNAL_IP}:2379,https://127.0.0.1:2379
+
+# Maximum number of snapshot files to retain (0 is unlimited).
+max-snapshots: 5
+
+# Maximum number of wal files to retain (0 is unlimited).
+max-wals: 5
+
+# Comma-separated white list of origins for CORS (cross-origin resource sharing).
+cors:
+
+# List of this member's peer URLs to advertise to the rest of the cluster.       
+# The URLs needed to be a comma-separated list.                                  
+initial-advertise-peer-urls: https://${INTERNAL_IP}:2380                             
+                                                                                 
+# List of this member's client URLs to advertise to the public.                  
+# The URLs needed to be a comma-separated list.                                  
+advertise-client-urls: https://${INTERNAL_IP}:2379                                  
+                                                                                 
+# Discovery URL used to bootstrap the cluster.                                   
+discovery:                                                                       
+                                                                                 
+# Valid values include 'exit', 'proxy'                                           
+discovery-fallback: 'proxy'                                                      
+                                                                                 
+# HTTP proxy to use for traffic to discovery service.                            
+discovery-proxy:                                                                 
+                                                                                 
+# DNS domain used to bootstrap initial cluster.                                  
+discovery-srv:                                                                   
+                                                                                 
+# Initial cluster configuration for bootstrapping.                               
+initial-cluster: "kcontroller1=https://172.42.42.101:2380,kcontroller2=https://172.42.42.102:2380,kcontroller3=https://172.42.42.103:2380"                                                                
+                                                                                 
+# Initial cluster token for the etcd cluster during bootstrap.                   
+initial-cluster-token: 'etcd-cluster-0'                                            
+                                                                                 
+# Initial cluster state ('new' or 'existing').                                   
+initial-cluster-state: 'new'                                                     
+                                                                                 
+# Reject reconfiguration requests that would cause quorum loss.                  
+strict-reconfig-check: false                                                     
+                                                                                 
+# Accept etcd V2 client requests                                                 
+enable-v2: true                                                                  
+                                                                                 
+# Enable runtime profiling data via HTTP server                                  
+enable-pprof: true                                                        
+                                                                          
+# Valid values include 'on', 'readonly', 'off'                            
+proxy: 'off'                                                   
+                                                               
+# Time (in milliseconds) an endpoint will be held in a failed state.
+proxy-failure-wait: 5000                                            
+                                                                    
+# Time (in milliseconds) of the endpoints refresh interval.         
+proxy-refresh-interval: 30000
+
+# Time (in milliseconds) for a dial to timeout.                                  
+proxy-dial-timeout: 1000                                                         
+                                                                                 
+# Time (in milliseconds) for a write to timeout.                                 
+proxy-write-timeout: 5000                                                        
+                                                                                 
+# Time (in milliseconds) for a read to timeout.                                  
+proxy-read-timeout: 0                                                            
+                                                                                 
+client-transport-security:                                                       
+  # Path to the client server TLS cert file.                                     
+  cert-file: /etc/etcd/kubernetes.pem                                                                    
+                                                                                 
+  # Path to the client server TLS key file.                                      
+  key-file: /etc/etcd/kubernetes-key.pem                                                                     
+                                                                                 
+  # Enable client cert authentication.                                           
+  client-cert-auth: true                                                        
+                                                                                 
+  # Path to the client server TLS trusted CA cert file.                          
+  trusted-ca-file: /etc/etcd/ca.pem                                                              
+                                                                                 
+  # Client TLS using generated certificates                                      
+  auto-tls: false                                                                
+                                                                                 
+peer-transport-security:                                                         
+  # Path to the peer server TLS cert file.                                       
+  cert-file: /etc/etcd/kubernetes.pem                                                                    
+                                                                                 
+  # Path to the peer server TLS key file.                                        
+  key-file: /etc/etcd/kubernetes-key.pem                                                                     
+                                                                                 
+  # Enable peer client cert authentication.                                      
+  client-cert-auth: true                                                        
+                                                                                 
+  # Path to the peer server TLS trusted CA cert file.                     
+  trusted-ca-file: /etc/etcd/ca.pem                                                       
+                                                                          
+  # Peer TLS using generated certificates.                          
+  auto-tls: false                                                   
+                                                                    
+# Enable debug-level logging for etcd.                              
+debug: false                                                        
+                                                                    
+logger: zap 
+
+logger: zap                                                               
+                                                                    
+# Specify 'stdout' or 'stderr' to skip journald logging even when running under systemd.
+log-outputs: [stderr]                                               
+                                                                                        
+# Force to create a new one member cluster.                         
+force-new-cluster: false                                            
+                                                                    
+auto-compaction-mode: periodic                                      
+auto-compaction-retention: "1"
+
 EOF
 ```
 
 ### Start the etcd Server
 
 ```
-{
-  sudo systemctl daemon-reload
-  sudo systemctl enable etcd
-  sudo systemctl start etcd
-}
+  sudo rc-service etcd start
+  sudo rc-update add etcd boot
 ```
 
-> Remember to run the above commands on each controller node: `controller-0`, `controller-1`, and `controller-2`.
+> Remember to run the above commands on each controller node: `kcontroller1`, `kcontroller2`, and `kcontroller3`.
 
 ## Verification
 
