@@ -9,9 +9,9 @@ Please create a normal user and grant full access to this user with `sudo`. A ro
 At the time of the writing, Alpine edge has all the up-to-date kubernetes packages. Please enable Alpine edge repositories:
 
 ```sh
-echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" > /etc/apk/repositories
-echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
-echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories
+echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" | sudo tee /etc/apk/repositories
+echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" | sudo tee -a /etc/apk/repositories
+echo "http://dl-cdn.alpinelinux.org/alpine/edge/testing" | sudo tee -a /etc/apk/repositories
 
 sudo apk update
 sudo apk upgrade
