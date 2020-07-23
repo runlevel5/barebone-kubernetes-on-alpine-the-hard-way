@@ -12,15 +12,13 @@ The Kubernetes [networking model](https://kubernetes.io/docs/concepts/cluster-ad
 
 In this section a dedicated network will be setup to host the Kubernetes cluster.
 
-Create the custom virtual network with 10.240.0.0/24 network range.
+Create the custom virtual network with 172.42.42.0/24 network range.
 
 The document will not cover how to do so for a VM. Please seek documentation of the solution you choose, like VirtualBox or QEMU/KVM.
 
-> The `10.240.0.0/24` IP address range can host up to 254 compute instances.
-
 ## Virtual Machine
 
-The virtual machines in this lab will be provisioned using [Alpine (virt variant)](https://alpinelinux.org/downloads/) 3.12, which has good support for the [containerd container runtime](https://github.com/containerd/containerd). Each compute instance will be provisioned with a fixed private IP address to simplify the Kubernetes bootstrapping process.
+Each VM will be provisioned with a fixed private IP address to simplify the Kubernetes bootstrapping process.
 
 ### Kubernetes Controllers
 
@@ -36,9 +34,9 @@ Next we configure the static IP address for each VM:
 
 auto eth0
 iface eth0 inet static
-        address 10.240.0.${i}
+        address 172.42.42.${i}
         netmask 255.255.255.0
-        gateway 10.240.0.1
+        gateway 172.42.42.1
 ```
 
 then restart networking daemon:
@@ -55,13 +53,13 @@ It is recommended to have at least 10GB storage, 2GB RAM and 2 vCPU for each VM.
 
 ```
 # Edit /etc/network/interfaces
-# where $i is 201, 202 and 203 respectively
+# where $i is 200, 201 and 202 respectively
 
 auto eth0
 iface eth0 inet static
-        address 10.240.0.${i}
+        address 172.42.42.${i}
         netmask 255.255.255.0
-        gateway 10.240.0.1
+        gateway 172.42.42.1
 ```
 
 then restart networking daemon:
