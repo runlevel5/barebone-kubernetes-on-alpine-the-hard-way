@@ -9,8 +9,6 @@ In this section you will provision a Certificate Authority that can be used to g
 Generate the CA configuration file, certificate, and private key:
 
 ```
-{
-
 cat > ca-config.json <<EOF
 {
   "signing": {
@@ -47,8 +45,6 @@ cat > ca-csr.json <<EOF
 EOF
 
 cfssl gencert -initca ca-csr.json | cfssljson -bare ca
-
-}
 ```
 
 Results:
@@ -67,8 +63,6 @@ In this section you will generate client and server certificates for each Kubern
 Generate the `admin` client certificate and private key:
 
 ```
-{
-
 cat > admin-csr.json <<EOF
 {
   "CN": "admin",
@@ -94,8 +88,6 @@ cfssl gencert \
   -config=ca-config.json \
   -profile=kubernetes \
   admin-csr.json | cfssljson -bare admin
-
-}
 ```
 
 Results:
