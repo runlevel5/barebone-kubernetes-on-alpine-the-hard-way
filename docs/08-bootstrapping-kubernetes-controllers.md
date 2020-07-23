@@ -4,15 +4,7 @@ In this lab you will bootstrap the Kubernetes control plane across three compute
 
 ## Prerequisites
 
-The commands in this lab must be run on each controller instance: `controller-0`, `controller-1`, and `controller-2`. Login to each controller instance using the `gcloud` command. Example:
-
-```
-gcloud compute ssh controller-0
-```
-
-### Running commands in parallel with tmux
-
-[tmux](https://github.com/tmux/tmux/wiki) can be used to run commands on multiple compute instances at the same time. See the [Running commands in parallel with tmux](01-prerequisites.md#running-commands-in-parallel-with-tmux) section in the Prerequisites lab.
+The commands in this lab must be run on each controller instance: `kcontroller1`, `kcontroller2`, and `kcontroller3`.
 
 ## Provision the Kubernetes Control Plane
 
@@ -22,44 +14,28 @@ Create the Kubernetes configuration directory:
 sudo mkdir -p /etc/kubernetes/config
 ```
 
-### Download and Install the Kubernetes Controller Binaries
+### Install the Kubernetes Controller
 
-Download the official Kubernetes release binaries:
-
-```
-wget -q --show-progress --https-only --timestamping \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-apiserver" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-controller-manager" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-scheduler" \
-  "https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kubectl"
-```
-
-Install the Kubernetes binaries:
+Install Kubernetes:
 
 ```
-{
-  chmod +x kube-apiserver kube-controller-manager kube-scheduler kubectl
-  sudo mv kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin/
-}
+sudo apk add kube-apiserver kube-controller-manager kube-scheduler kubectl
 ```
 
 ### Configure the Kubernetes API Server
 
 ```
-{
   sudo mkdir -p /var/lib/kubernetes/
 
   sudo mv ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
     service-account-key.pem service-account.pem \
     encryption-config.yaml /var/lib/kubernetes/
-}
 ```
 
 The instance internal IP address will be used to advertise the API Server to members of the cluster. Retrieve the internal IP address for the current compute instance:
 
 ```
-INTERNAL_IP=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip)
+INTERNAL_IP=$(hostname -i)
 ```
 
 Create the `kube-apiserver.service` systemd unit file:
