@@ -13,7 +13,7 @@ The commands in this lab must be run on each controller VM: `kcontroller1`, `kco
 Install etcd and ectdctl:
 
 ```
-sudo apk add etcd
+sudo apk add etcd etcd-ctl
 ```
 
 ### Configure the etcd Server
