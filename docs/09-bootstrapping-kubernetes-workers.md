@@ -198,7 +198,7 @@ sudo swapoff -a
 To ensure swap remains off after reboot, we remove swap from fstab:
 
 ```
-sudo sed -i '/swap/d' /etc/fstab`
+sudo sed -i '/swap/d' /etc/fstab
 ```
 
 ### Start the Worker Services
