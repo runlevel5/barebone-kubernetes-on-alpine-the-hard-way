@@ -6,10 +6,6 @@ In this lab you will bootstrap three Kubernetes worker nodes. The following comp
 
 The commands in this lab must be run on each worker instance: `kworker1`, `kworker2`, and `kworker3`.
 
-### Running commands in parallel with tmux
-
-[tmux](https://github.com/tmux/tmux/wiki) can be used to run commands on multiple compute instances at the same time. See the [Running commands in parallel with tmux](01-prerequisites.md#running-commands-in-parallel-with-tmux) section in the Prerequisites lab.
-
 ## Provisioning a Kubernetes Worker Node
 
 Install the OS dependencies:
