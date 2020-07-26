@@ -4,11 +4,7 @@ In this lab you will bootstrap three Kubernetes worker nodes. The following comp
 
 ## Prerequisites
 
-The commands in this lab must be run on each worker instance: `worker-0`, `worker-1`, and `worker-2`. Login to each worker instance using the `gcloud` command. Example:
-
-```
-gcloud compute ssh worker-0
-```
+The commands in this lab must be run on each worker instance: `kworker1`, `kworker2`, and `kworker3`.
 
 ### Running commands in parallel with tmux
 
@@ -19,25 +15,16 @@ gcloud compute ssh worker-0
 Install the OS dependencies:
 
 ```
-{
-  sudo apt-get update
-  sudo apt-get -y install socat conntrack ipset
-}
+sudo apk add socat conntrack-tools ipset
 ```
 
 > The socat binary enables support for the `kubectl port-forward` command.
 
 ### Disable Swap
 
-By default the kubelet will fail to start if [swap](https://help.ubuntu.com/community/SwapFaq) is enabled. It is [recommended](https://github.com/kubernetes/kubernetes/issues/7294) that swap be disabled to ensure Kubernetes can provide proper resource allocation and quality of service.
+By default the kubelet will fail to start if swap is enabled. It is [recommended](https://github.com/kubernetes/kubernetes/issues/7294) that swap be disabled to ensure Kubernetes can provide proper resource allocation and quality of service.
 
-Verify if swap is enabled:
-
-```
-sudo swapon --show
-```
-
-If output is empthy then swap is not enabled. If swap is enabled run the following command to disable swap immediately:
+If swap is enabled run the following command to disable swap immediately:
 
 ```
 sudo swapoff -a
@@ -45,44 +32,10 @@ sudo swapoff -a
 
 > To ensure swap remains off after reboot consult your Linux distro documentation.
 
-### Download and Install Worker Binaries
+### Install Worker Binaries
 
 ```
-wget -q --show-progress --https-only --timestamping \
-  https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.18.0/crictl-v1.18.0-linux-amd64.tar.gz \
-  https://github.com/opencontainers/runc/releases/download/v1.0.0-rc91/runc.amd64 \
-  https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz \
-  https://github.com/containerd/containerd/releases/download/v1.3.6/containerd-1.3.6-linux-amd64.tar.gz \
-  https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kubectl \
-  https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kube-proxy \
-  https://storage.googleapis.com/kubernetes-release/release/v1.18.6/bin/linux/amd64/kubelet
-```
-
-Create the installation directories:
-
-```
-sudo mkdir -p \
-  /etc/cni/net.d \
-  /opt/cni/bin \
-  /var/lib/kubelet \
-  /var/lib/kube-proxy \
-  /var/lib/kubernetes \
-  /var/run/kubernetes
-```
-
-Install the worker binaries:
-
-```
-{
-  mkdir containerd
-  tar -xvf crictl-v1.18.0-linux-amd64.tar.gz
-  tar -xvf containerd-1.3.6-linux-amd64.tar.gz -C containerd
-  sudo tar -xvf cni-plugins-linux-amd64-v0.8.6.tgz -C /opt/cni/bin/
-  sudo mv runc.amd64 runc
-  chmod +x crictl kubectl kube-proxy kubelet runc 
-  sudo mv crictl kubectl kube-proxy kubelet runc /usr/local/bin/
-  sudo mv containerd/bin/* /bin/
-}
+sudo apk add containerd kubectl kube-proxy kubelet cri-tool
 ```
 
 ### Configure CNI Networking
@@ -90,8 +43,7 @@ Install the worker binaries:
 Retrieve the Pod CIDR range for the current compute instance:
 
 ```
-POD_CIDR=$(curl -s -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/attributes/pod-cidr)
+POD_CIDR="192.168.1.0/16"
 ```
 
 Create the `bridge` network configuration file:
@@ -137,51 +89,15 @@ sudo mkdir -p /etc/containerd/
 ```
 
 ```
-cat << EOF | sudo tee /etc/containerd/config.toml
-[plugins]
-  [plugins.cri.containerd]
-    snapshotter = "overlayfs"
-    [plugins.cri.containerd.default_runtime]
-      runtime_type = "io.containerd.runtime.v1.linux"
-      runtime_engine = "/usr/local/bin/runc"
-      runtime_root = ""
-EOF
-```
-
-Create the `containerd.service` systemd unit file:
-
-```
-cat <<EOF | sudo tee /etc/systemd/system/containerd.service
-[Unit]
-Description=containerd container runtime
-Documentation=https://containerd.io
-After=network.target
-
-[Service]
-ExecStartPre=/sbin/modprobe overlay
-ExecStart=/bin/containerd
-Restart=always
-RestartSec=5
-Delegate=yes
-KillMode=process
-OOMScoreAdjust=-999
-LimitNOFILE=1048576
-LimitNPROC=infinity
-LimitCORE=infinity
-
-[Install]
-WantedBy=multi-user.target
-EOF
+containerd config default | sudo tee /etc/containerd/config.toml
 ```
 
 ### Configure the Kubelet
 
 ```
-{
-  sudo mv ${HOSTNAME}-key.pem ${HOSTNAME}.pem /var/lib/kubelet/
-  sudo mv ${HOSTNAME}.kubeconfig /var/lib/kubelet/kubeconfig
-  sudo mv ca.pem /var/lib/kubernetes/
-}
+sudo mv ${HOSTNAME}-key.pem ${HOSTNAME}.pem /var/lib/kubelet/
+sudo mv ${HOSTNAME}.kubeconfig /var/lib/kubelet/kubeconfig
+sudo mv ca.pem /var/lib/kubernetes/
 ```
 
 Create the `kubelet-config.yaml` configuration file:
@@ -203,40 +119,26 @@ clusterDomain: "cluster.local"
 clusterDNS:
   - "10.32.0.10"
 podCIDR: "${POD_CIDR}"
-resolvConf: "/run/systemd/resolve/resolv.conf"
 runtimeRequestTimeout: "15m"
 tlsCertFile: "/var/lib/kubelet/${HOSTNAME}.pem"
 tlsPrivateKeyFile: "/var/lib/kubelet/${HOSTNAME}-key.pem"
 EOF
 ```
 
-> The `resolvConf` configuration is used to avoid loops when using CoreDNS for service discovery on systems running `systemd-resolved`. 
-
-Create the `kubelet.service` systemd unit file:
+Create the `/var/lib/kubelet/kubeadm-flags.env` to configure the daemon:
 
 ```
-cat <<EOF | sudo tee /etc/systemd/system/kubelet.service
-[Unit]
-Description=Kubernetes Kubelet
-Documentation=https://github.com/kubernetes/kubernetes
-After=containerd.service
-Requires=containerd.service
+sudo mkdir -p  /var/lib/kubelet
 
-[Service]
-ExecStart=/usr/local/bin/kubelet \\
-  --config=/var/lib/kubelet/kubelet-config.yaml \\
-  --container-runtime=remote \\
-  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \\
-  --image-pull-progress-deadline=2m \\
-  --kubeconfig=/var/lib/kubelet/kubeconfig \\
-  --network-plugin=cni \\
-  --register-node=true \\
-  --v=2
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
+cat <<EOF | sudo tee /var/lib/kubelet/kubeadm-flags.env
+export KUBELET_KUBEADM_ARGS="--config=/var/lib/kubelet/kubelet-config.yaml \\
+--container-runtime=remote \\
+--container-runtime-endpoint=unix:///run/containerd/containerd.sock \\
+--image-pull-progress-deadline=2m \\
+--kubeconfig=/var/lib/kubelet/kubeconfig \\
+--network-plugin=cni \\
+--register-node=true \\
+--v=2"
 EOF
 ```
 
@@ -259,55 +161,44 @@ clusterCIDR: "10.200.0.0/16"
 EOF
 ```
 
-Create the `kube-proxy.service` systemd unit file:
+Create the `/var/lib/kubernetes/kube-proxy-flags.env` to configure the daemon:
 
 ```
-cat <<EOF | sudo tee /etc/systemd/system/kube-proxy.service
-[Unit]
-Description=Kubernetes Kube Proxy
-Documentation=https://github.com/kubernetes/kubernetes
-
-[Service]
-ExecStart=/usr/local/bin/kube-proxy \\
-  --config=/var/lib/kube-proxy/kube-proxy-config.yaml
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
+sudo mkdir -p  /var/lib/kubernetes
+cat <<EOF | sudo tee /var/lib/kubernetes/kube-proxy-flags.env
+export KUBE_PROXY_ARGS="--config=/var/lib/kube-proxy/kube-proxy-config.yaml"
 EOF
 ```
 
 ### Start the Worker Services
 
 ```
-{
-  sudo systemctl daemon-reload
-  sudo systemctl enable containerd kubelet kube-proxy
-  sudo systemctl start containerd kubelet kube-proxy
-}
+sudo rc-update add containerd default
+sudo rc-update add kubelet default
+sudo rc-update add kube-proxy default
+
+sudo rc-service containerd start
+sudo rc-service kubelet start
+sudo rc-service kube-proxy start
 ```
 
-> Remember to run the above commands on each worker node: `worker-0`, `worker-1`, and `worker-2`.
+> Remember to run the above commands on each worker node.
 
 ## Verification
 
-> The compute instances created in this tutorial will not have permission to complete this section. Run the following commands from the same machine used to create the compute instances.
-
-List the registered Kubernetes nodes:
+List the registered Kubernetes nodes by running this command on the `kcontroller1` VM:
 
 ```
-gcloud compute ssh controller-0 \
-  --command "kubectl get nodes --kubeconfig admin.kubeconfig"
+kubectl get nodes --kubeconfig admin.kubeconfig
 ```
 
 > output
 
 ```
 NAME       STATUS   ROLES    AGE   VERSION
-worker-0   Ready    <none>   24s   v1.18.6
-worker-1   Ready    <none>   24s   v1.18.6
-worker-2   Ready    <none>   24s   v1.18.6
+kworker1   Ready    <none>   24s   v1.18.6
+kworker2   Ready    <none>   24s   v1.18.6
+kworker3   Ready    <none>   24s   v1.18.6
 ```
 
 Next: [Configuring kubectl for Remote Access](10-configuring-kubectl.md)
