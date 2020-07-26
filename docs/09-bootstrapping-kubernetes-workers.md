@@ -198,7 +198,7 @@ If swap is enabled run the following command to disable swap immediately:
 sudo swapoff -a
 ```
 
-To ensure swap remains off after reboot, remove the `swap    swap    defaults        0 0` line from `/etc/fstab`
+To ensure swap remains off after reboot, we remove swap from fstab: `sed -i '/swap/d' /etc/fstab`
 
 ### Start the Worker Services
 
