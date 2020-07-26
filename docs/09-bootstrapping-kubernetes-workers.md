@@ -153,6 +153,7 @@ export KUBELET_KUBEADM_ARGS="--config=/var/lib/kubelet/kubelet-config.yaml \\
 --container-runtime-endpoint=unix:///run/containerd/containerd.sock \\
 --image-pull-progress-deadline=2m \\
 --kubeconfig=/var/lib/kubelet/kubeconfig \\
+--cgroup-driver=cgroupfs \\
 --network-plugin=cni \\
 --register-node=true \\
 --v=2"
