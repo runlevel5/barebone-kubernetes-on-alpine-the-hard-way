@@ -16,22 +16,10 @@ sudo apk add socat conntrack-tools ipset
 
 > The socat binary enables support for the `kubectl port-forward` command.
 
-### Disable Swap
-
-By default the kubelet will fail to start if swap is enabled. It is [recommended](https://github.com/kubernetes/kubernetes/issues/7294) that swap be disabled to ensure Kubernetes can provide proper resource allocation and quality of service.
-
-If swap is enabled run the following command to disable swap immediately:
-
-```
-sudo swapoff -a
-```
-
-> To ensure swap remains off after reboot consult your Linux distro documentation.
-
 ### Install Worker Binaries
 
 ```
-sudo apk add containerd containerd-openrc kubectl kube-proxy kubelet cri-tool
+sudo apk add containerd containerd-openrc kubectl kube-proxy kubelet cri-tools
 ```
 
 ### Configure CNI Networking
@@ -45,6 +33,7 @@ POD_CIDR="192.168.1.0/16"
 Create the `bridge` network configuration file:
 
 ```
+sudo mkdir -p /etc/cni/net.d/
 cat <<EOF | sudo tee /etc/cni/net.d/10-bridge.conf
 {
     "cniVersion": "0.3.1",
@@ -122,6 +111,7 @@ sudo sysctl -p /etc/sysctl.d/99-kubernetes-cri.conf
 ### Configure the Kubelet
 
 ```
+sudo mkdir -p /var/lib/kubernetes/
 sudo mv ${HOSTNAME}-key.pem ${HOSTNAME}.pem /var/lib/kubelet/
 sudo mv ${HOSTNAME}.kubeconfig /var/lib/kubelet/kubeconfig
 sudo mv ca.pem /var/lib/kubernetes/
@@ -155,7 +145,7 @@ EOF
 Create the `/var/lib/kubelet/kubeadm-flags.env` to configure the daemon:
 
 ```
-sudo mkdir -p  /var/lib/kubelet
+sudo mkdir -p /var/lib/kubelet
 
 cat <<EOF | sudo tee /var/lib/kubelet/kubeadm-flags.env
 export KUBELET_KUBEADM_ARGS="--config=/var/lib/kubelet/kubelet-config.yaml \\
@@ -196,6 +186,18 @@ cat <<EOF | sudo tee /var/lib/kubernetes/kube-proxy-flags.env
 export KUBE_PROXY_ARGS="--config=/var/lib/kube-proxy/kube-proxy-config.yaml"
 EOF
 ```
+
+### Disable Swap
+
+By default the kubelet will fail to start if swap is enabled. It is [recommended](https://github.com/kubernetes/kubernetes/issues/7294) that swap be disabled to ensure Kubernetes can provide proper resource allocation and quality of service.
+
+If swap is enabled run the following command to disable swap immediately:
+
+```
+sudo swapoff -a
+```
+
+To ensure swap remains off after reboot, remove the `swap    swap    defaults        0 0` line from `/etc/fstab`
 
 ### Start the Worker Services
 
