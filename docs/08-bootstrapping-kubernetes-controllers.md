@@ -88,8 +88,10 @@ cat <<EOF | sudo tee /var/lib/kubernetes/kube-controller-manager-flags.env
 export KUBE_CONTROLLER_MANAGER_ARGS="--bind-address=0.0.0.0 \\
 --cluster-cidr=10.200.0.0/16 \\
 --cluster-name=kubernetes \\
+--allocate-node-cidrs=true \\
 --cluster-signing-cert-file=/var/lib/kubernetes/ca.pem \\
 --cluster-signing-key-file=/var/lib/kubernetes/ca-key.pem \\
+--client-ca-file=/var/lib/kubernetes/ca.pem \\
 --kubeconfig=/var/lib/kubernetes/kube-controller-manager.kubeconfig \\
 --leader-elect=true \\
 --root-ca-file=/var/lib/kubernetes/ca.pem \\
