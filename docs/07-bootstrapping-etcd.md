@@ -69,6 +69,9 @@ listen-peer-urls: https://${INTERNAL_IP}:2380
 # List of comma separated URLs to listen on for client traffic.
 listen-client-urls: https://${INTERNAL_IP}:2379,https://127.0.0.1:2379
 
+# List of comma separated URLs to listen on for metrics traffic.
+listen-metrics-urls: https://${INTERNAL_IP}:2381,http://127.0.0.1:2381
+
 # Maximum number of snapshot files to retain (0 is unlimited).
 max-snapshots: 5
 
