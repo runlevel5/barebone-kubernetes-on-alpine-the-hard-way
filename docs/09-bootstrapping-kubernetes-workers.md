@@ -71,9 +71,6 @@ Create the `containerd` configuration file:
 
 ```
 sudo mkdir -p /etc/containerd/
-```
-
-```
 containerd config default | sudo tee /etc/containerd/config.toml
 ```
 
@@ -198,7 +195,11 @@ If swap is enabled run the following command to disable swap immediately:
 sudo swapoff -a
 ```
 
-To ensure swap remains off after reboot, we remove swap from fstab: `sed -i '/swap/d' /etc/fstab`
+To ensure swap remains off after reboot, we remove swap from fstab:
+
+```
+sudo sed -i '/swap/d' /etc/fstab`
+```
 
 ### Start the Worker Services
 
