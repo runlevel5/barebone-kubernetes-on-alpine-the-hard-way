@@ -71,8 +71,10 @@ Create the `containerd` configuration file:
 
 ```
 sudo mkdir -p /etc/containerd/
-containerd config default | sed "s|/opt/cni/bin|/usr/libexec/cni|g"
+containerd config default | sed "s|/opt/cni/bin|/usr/libexec/cni|g" > /etc/containerd/config.toml
 ```
+
+> By default, the containerd would look up the `/opt/cni/bin` for plugin. This path does not exist on Alpine distro
 
 enable modules required by containerd:
 
