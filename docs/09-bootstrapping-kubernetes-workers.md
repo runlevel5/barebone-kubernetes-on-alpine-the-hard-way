@@ -71,7 +71,7 @@ Create the `containerd` configuration file:
 
 ```
 sudo mkdir -p /etc/containerd/
-containerd config default | sudo tee /etc/containerd/config.toml
+containerd config default | sed "s|/opt/cni/bin|/usr/libexec/cni|g"
 ```
 
 enable modules required by containerd:
