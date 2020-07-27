@@ -60,9 +60,9 @@ kubectl get nodes
 
 ```
 NAME       STATUS   ROLES    AGE     VERSION
-worker-0   Ready    <none>   2m30s   v1.18.6
-worker-1   Ready    <none>   2m30s   v1.18.6
-worker-2   Ready    <none>   2m30s   v1.18.6
+kworker1   Ready    <none>   2m30s   v1.18.6
+kworker2   Ready    <none>   2m30s   v1.18.6
+kworker3   Ready    <none>   2m30s   v1.18.6
 ```
 
 Next: [Provisioning Pod Network Routes](11-pod-network-routes.md)
