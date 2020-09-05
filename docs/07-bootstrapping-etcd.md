@@ -102,7 +102,7 @@ discovery-proxy:
 discovery-srv:
 
 # Initial cluster configuration for bootstrapping.
-initial-cluster: "kcontroller1=https://172.42.42.101:2380,kcontroller2=https://172.42.42.102:2380,kcontroller3=https://172.42.42.103:2380"
+initial-cluster: "kcontroller1=https://10.244.0.11:2380,kcontroller2=https://10.244.0.12:2380,kcontroller3=https://10.244.0.13:2380"
 
 # Initial cluster token for the etcd cluster during bootstrap.
 initial-cluster-token: 'etcd-cluster-0'
@@ -224,9 +224,9 @@ sudo ETCDCTL_API=3 etcdctl member list \
 > output
 
 ```
-3a57933972cb5131, started, kcontroller2, https://172.42.42.102:2380, https://172.42.42.102:2379, false
-f98dc20bce6225a0, started, kcontroller3, https://172.42.42.103:2380, https://172.42.42.103:2379, false
-ffed16798470cab5, started, kcontroller1, https://172.42.42.101:2380, https://172.42.42.101:2379, false
+3a57933972cb5131, started, kcontroller2, https://10.244.0.12:2380, https://10.244.0.12:2379, false
+f98dc20bce6225a0, started, kcontroller3, https://10.244.0.13:2380, https://10.244.0.13:2379, false
+ffed16798470cab5, started, kcontroller1, https://10.244.0.11:2380, https://10.244.0.11:2379, false
 ```
 
 Next: [Bootstrapping the Kubernetes Control Plane](08-bootstrapping-kubernetes-controllers.md)
