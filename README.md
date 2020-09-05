@@ -1,8 +1,8 @@
 # Climb the Alpine with Kubernetes The Hard Way
 
-This tutorial walks you through setting up Kubernetes the hard way. This guide is not for people looking for a fully automated command to bring up a Kubernetes cluster. If that's you then check out [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine), or the [Getting Started Guides](https://kubernetes.io/docs/setup).
+This tutorial walks you through setting up Kubernetes the hard way on a bare-metal server running Alpine Linux. This guide is not for people looking for a fully automated command to bring up a Kubernetes cluster. If that's you then check out [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine), or the [Getting Started Guides](https://kubernetes.io/docs/setup).
 
-Kubernetes on Alpine Linux The Hard Way is optimized for learning, which means taking the long route to ensure you understand each task required to bootstrap a Kubernetes cluster on Alpine Linux.
+Kubernetes on bare-metal Alpine Linux The Hard Way is optimized for learning, which means taking the long route to ensure you understand each task required to bootstrap a Kubernetes cluster on Alpine Linux.
 
 > The results of this tutorial should not be viewed as production ready, and may receive limited support from the community, but don't let that stop you from learning!
 
@@ -22,15 +22,15 @@ The target audience for this tutorial is someone planning to support a productio
 
 Kubernetes The Hard Way guides you through bootstrapping a highly available Kubernetes cluster with end-to-end encryption between components and RBAC authentication.
 
-* [kubernetes](https://github.com/kubernetes/kubernetes) v1.18.6
-* [containerd](https://github.com/containerd/containerd) v1.3.6
+* [kubernetes](https://github.com/kubernetes/kubernetes) v1.19.0
+* [containerd](https://github.com/containerd/containerd) v1.4.0
 * [coredns](https://github.com/coredns/coredns) v1.7.0
 * [cni](https://github.com/containernetworking/cni) v0.8.6
-* [etcd](https://github.com/coreos/etcd) v3.4.10
+* [etcd](https://github.com/coreos/etcd) v3.4.13
 
 ## Labs
 
-This tutorial assumes you have access to Alpine VMs on the cloud or locally under VirtualBox or KVM/QEMU.
+This tutorial assumes you have access to a server running Alpine Linux.
 
 * [Prerequisites](docs/01-prerequisites.md)
 * [Installing the Client Tools](docs/02-client-tools.md)
