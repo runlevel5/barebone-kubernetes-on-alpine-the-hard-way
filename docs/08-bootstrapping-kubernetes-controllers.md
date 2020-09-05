@@ -56,7 +56,7 @@ export KUBE_APISERVER_ARGS="--advertise-address=${INTERNAL_IP} \\
 --etcd-cafile=/var/lib/kubernetes/ca.pem \\
 --etcd-certfile=/var/lib/kubernetes/kubernetes.pem \\
 --etcd-keyfile=/var/lib/kubernetes/kubernetes-key.pem \\
---etcd-servers=https://172.42.42.101:2379,https://172.42.42.102:2379,https://172.42.42.103:2379 \\
+--etcd-servers=https://10.244.0.11:2379,https://10.244.0.12:2379,https://10.244.0.13:2379 \\
 --event-ttl=1h \\
 --encryption-provider-config=/var/lib/kubernetes/encryption-config.yaml \\
 --kubelet-certificate-authority=/var/lib/kubernetes/ca.pem \\
@@ -223,12 +223,12 @@ EOF
 
 In this section you will provision an external load balancer to front the Kubernetes API Servers. The `kubernetes-the-hard-way` static IP address will be attached to the resulting load balancer.
 
-TODO: Add nginx as load balancer on an VM with static IP 172.42.42.100
+TODO: Add nginx as load balancer on an VM with static IP 10.244.0.100
 
 ### Verification
 
 ```
-KUBERNETES_PUBLIC_ADDRESS=$(172.42.42.100)
+KUBERNETES_PUBLIC_ADDRESS=$(10.244.0.100)
 ```
 
 Make a HTTP request for the Kubernetes version info:
