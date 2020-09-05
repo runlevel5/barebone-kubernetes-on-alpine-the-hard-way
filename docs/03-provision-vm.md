@@ -12,7 +12,7 @@ The Kubernetes [networking model](https://kubernetes.io/docs/concepts/cluster-ad
 
 In this section a dedicated network will be setup to host the Kubernetes cluster.
 
-Create the custom virtual network with 172.42.42.0/24 network range.
+Create the custom virtual network with 10.244.0.0/16 network range.
 
 The document will not cover how to do so for a VM. Please seek documentation of the solution you choose, like VirtualBox or QEMU/KVM.
 
@@ -30,14 +30,14 @@ Next we configure the static IP address for each VM:
 
 ```
 # Edit /etc/network/interfaces
-# where $i is 101, 102 and 103 respectively
+# where $i is 11, 11 and 13 respectively
 
 auto eth0
 iface eth0 inet static
         hostname kcontroller${i}
-        address 172.42.42.${i}
-        netmask 255.255.255.0
-        gateway 172.42.42.1
+        address 10.244.0.${i}
+        netmask 255.255.0.0
+        gateway 10.244.0.1
 ```
 
 then restart networking daemon:
@@ -49,19 +49,8 @@ sudo rc-service networking restart
 Next set up the hostname:
 
 ```
-# where $i is 101, 102 and 103 respectively
+# where $i is 11, 12 and 13 respectively
 sudo hostname kcontroller${i}
-```
-
-and update the hosts file:
-
-```
-echo "172.42.42.101   kcontroller1" | sudo tee -a /etc/hosts
-echo "172.42.42.102   kcontroller2" | sudo tee -a /etc/hosts
-echo "172.42.42.103   kcontroller3" | sudo tee -a /etc/hosts
-echo "172.42.42.201   kworker1" | sudo tee -a /etc/hosts
-echo "172.42.42.202   kworker2" | sudo tee -a /etc/hosts
-echo "172.42.42.203   kworker3" | sudo tee -a /etc/hosts
 ```
 
 ### Kubernetes Workers
@@ -72,14 +61,14 @@ It is recommended to have at least 10GB storage, 2GB RAM and 2 vCPU for each VM.
 
 ```
 # Edit /etc/network/interfaces
-# where $i is 201, 202 and 203 respectively
+# where $i is 101, 102 and 103 respectively
 
 auto eth0
 iface eth0 inet static
         hostname kworker${i}
-        address 172.42.42.${i}
+        address 10.244.0.${i}
         netmask 255.255.255.0
-        gateway 172.42.42.1
+        gateway 10.244.0.1
 ```
 
 then restart networking daemon:
@@ -88,22 +77,17 @@ then restart networking daemon:
 sudo rc-service networking restart
 ```
 
-Next set up the hostname:
+### Set up /etc/hosts
+
+Update the `/etc/hosts` of all controllers and workers with following DNS entries:
 
 ```
-# where $i is 201, 202 and 203 respectively
-sudo hostname kworker${i}
-```
-
-and update the hosts file:
-
-```
-echo "172.42.42.101   kcontroller1" | sudo tee -a /etc/hosts
-echo "172.42.42.102   kcontroller2" | sudo tee -a /etc/hosts
-echo "172.42.42.103   kcontroller2" | sudo tee -a /etc/hosts
-echo "172.42.42.201   kworker1" | sudo tee -a /etc/hosts
-echo "172.42.42.202   kworker2" | sudo tee -a /etc/hosts
-echo "172.42.42.203   kworker3" | sudo tee -a /etc/hosts
+echo "10.244.0.11   kcontroller1" | sudo tee -a /etc/hosts
+echo "10.244.0.12   kcontroller2" | sudo tee -a /etc/hosts
+echo "10.244.0.13   kcontroller3" | sudo tee -a /etc/hosts
+echo "10.244.0.101   kworker1" | sudo tee -a /etc/hosts
+echo "10.244.0.102   kworker2" | sudo tee -a /etc/hosts
+echo "10.244.0.103   kworker3" | sudo tee -a /etc/hosts
 ```
 
 Next: [Provisioning a CA and Generating TLS Certificates](04-certificate-authority.md)
